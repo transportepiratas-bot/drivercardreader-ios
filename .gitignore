@@ -1,0 +1,4 @@
+test_*.swift
+test_*.py
+test_*.txt
+*.log

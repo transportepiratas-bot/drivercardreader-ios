@@ -1,0 +1,124 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Install Xcode
+      run: |
+        # Check current Xcode
+        which xcodebuild || echo "Xcode CLI not in PATH"
+        xcode-select -p
+        xcodebuild -version 2>/dev/null || echo "Basic xcodebuild failed"
+        
+        # List available Xcode versions
+        ls /Applications/ | grep -i xcode || echo "No Xcode in Applications"
+    
+    - name: Setup Xcode
+      run: |
+        # Try to use Xcode
+        sudo xcode-select -s /Applications/Xcode.app/Contents/Developer 2>/dev/null || true
+        export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+        echo "DEVELOPER_DIR=$DEVELOPER_DIR"
+        xcodebuild -version
+    
+    - name: Clean
+      run: |
+        rm -rf DerivedData Payload DriverCardReader.ipa output build.log 2>/dev/null || true
+        echo "Cleaned"
+    
+    - name: List project
+      run: |
+        echo "Project files:"
+        ls -la
+        echo ""
+        echo "Xcode project:"
+        ls -la *.xcodeproj/ 2>/dev/null || echo "No xcodeproj"
+    
+    - name: Build iOS
+      id: build
+      run: |
+        export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+        export PATH=$PATH:/Applications/Xcode.app/Contents/Developer/usr/bin
+        
+        echo "Building with:"
+        xcodebuild -version
+        
+        xcodebuild -project DriverCardReader.xcodeproj \
+          -scheme DriverCardReader \
+          -configuration Release \
+          -destination 'generic/platform=iOS' \
+          -derivedDataPath ./DerivedData \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          ENABLE_BITCODE=NO \
+          build 2>&1 | tee build.log | tail -30
+        
+        echo ""
+        if grep -q "BUILD SUCCEEDED" build.log; then
+          echo "BUILD_STATUS=success" >> $GITHUB_ENV
+        else
+          echo "BUILD_STATUS=failed" >> $GITHUB_ENV
+        fi
+    
+    - name: Package IPA
+      if: env.BUILD_STATUS == 'success'
+      run: |
+        export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+        
+        echo "Looking for app bundle..."
+        find ./DerivedData -name "*.app" -type d 2>/dev/null
+        
+        APP_PATH=$(find ./DerivedData -name "DriverCardReader.app" -type d 2>/dev/null | head -1)
+        
+        if [ -z "$APP_PATH" ]; then
+            echo "ERROR: App not found"
+            ls -la ./DerivedData/Build/Products/ 2>/dev/null || true
+            exit 1
+        fi
+        
+        echo "Found: $APP_PATH"
+        
+        mkdir -p Payload/DriverCardReader.app
+        cp -R "$APP_PATH/"* Payload/DriverCardReader.app/
+        
+        echo "Payload:"
+        ls -la Payload/DriverCardReader.app/ | head -15
+        
+        cd Payload
+        zip -r ../DriverCardReader.ipa . -x "*.DS_Store"
+        cd ..
+        
+        ls -lh DriverCardReader.ipa
+        unzip -l DriverCardReader.ipa | head -20
+        
+        mkdir -p output
+        mv DriverCardReader.ipa output/
+        
+        echo "IPA created: output/DriverCardReader.ipa"
+    
+    - name: Upload
+      if: env.BUILD_STATUS == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: DriverCardReader-ipa
+        path: output/DriverCardReader.ipa
+        retention-days: 7
+    
+    - name: Show errors
+      if: env.BUILD_STATUS != 'success'
+      run: |
+        echo "Build failed"
+        tail -80 build.log 2>/dev/null
