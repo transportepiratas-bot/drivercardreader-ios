@@ -884,13 +884,13 @@ class DDDParser {
         return uniqueActivities
     }
 
-    private func scanForDailyRecordsV2(bytes: [UInt8], result: inout TachoBinaryData) -> [DriverActivity] {
+    private func scanForDailyRecords(bytes: [UInt8], result: inout TachoBinaryData) -> [DriverActivity] {
         var activities: [DriverActivity] = []
         let validTsMin: UInt32 = 1451606400 // 2016-01-01
         let validTsMax: UInt32 = UInt32(Date().timeIntervalSince1970) + 365 * 86400
 
         print("DDDParser: escaneo general de registros...")
-        i = 0
+        var i = 0
         while i + 12 < bytes.count {
             let prevLen = Int(bytes[i]) << 8 | Int(bytes[i + 1])
             let recLen  = Int(bytes[i + 2]) << 8 | Int(bytes[i + 3])
