@@ -1,0 +1,54 @@
+# Codemagic configuration for DriverCardReader-iOS
+# Documentation: https://docs.codemagic.io/yaml-basic-configuration/yaml-getting-started/
+
+workflows:
+  ios-build:
+    name: Build iOS IPA (Unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    working_directory: .
+    environment:
+      vars:
+        XCODE_PROJECT: "DriverCardReader.xcodeproj"
+        XCODE_SCHEME: "DriverCardReader"
+      xcode: latest
+    scripts:
+      - name: Build iOS Application
+        script: |
+          # Build the app bundle without code signing
+          xcodebuild -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ./DerivedData \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ALLOWED=NO \
+            ENABLE_BITCODE=NO \
+            build
+      - name: Package IPA
+        script: |
+          set -e
+          # Find the app bundle in DerivedData
+          APP_PATH=$(find ./DerivedData -name "$XCODE_SCHEME.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: App not found in DerivedData"
+            ls -R ./DerivedData
+            exit 1
+          fi
+          echo "Found app at: $APP_PATH"
+          
+          # Create Payload structure for IPA packaging
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          
+          # Package into IPA using zip
+          zip -r DriverCardReader.ipa Payload
+          echo "IPA created successfully"
+    artifacts:
+      - DriverCardReader.ipa
+    publishing:
+      email:
+        recipients:
+          - user@example.com
