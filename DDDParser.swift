@@ -879,20 +879,13 @@ class DDDParser {
             }
         }
         
-        print("DDDParser: Actividades únicas: \(uniqueActivities.count)")
+        print("DDDParser: Actividades únicas tras pasos 1-3: \(uniqueActivities.count)")
         
-        return uniqueActivities
-    }
-
-    private func scanForDailyRecords(bytes: [UInt8], result: inout TachoBinaryData) -> [DriverActivity] {
-        var activities: [DriverActivity] = []
-        let validTsMin: UInt32 = 1451606400 // 2016-01-01
-        let validTsMax: UInt32 = UInt32(Date().timeIntervalSince1970) + 365 * 86400
-
-        print("DDDParser: escaneo general de registros...")
+        // 4. Escaneo adicional buscando bloques TGD con cabecera (FID+Type+Length)
+        print("DDDParser: buscando bloques TGD con cabecera FID+Type+Length...")
         var i = 0
         while i + 12 < bytes.count {
-            let prevLen = Int(bytes[i]) << 8 | Int(bytes[i + 1])
+            // let prevLen = Int(bytes[i]) << 8 | Int(bytes[i + 1])
             let recLen  = Int(bytes[i + 2]) << 8 | Int(bytes[i + 3])
             
             guard recLen >= 12, recLen <= 30000, i + recLen <= bytes.count else {
@@ -903,116 +896,65 @@ class DDDParser {
             let ts = UInt32(bytes[i + 4]) << 24 | UInt32(bytes[i + 5]) << 16 |
                      UInt32(bytes[i + 6]) << 8  | UInt32(bytes[i + 7])
             
-            guard ts >= validTsMin && ts <= validTsMax else {
-                i += 1
-                continue
-            }
-            
-            let recordDate = Date(timeIntervalSince1970: TimeInterval(ts))
-            let adjustedRecordDate = recordDate.addingTimeInterval(7 * 3600)
-            
-            var goodCount = 0
-            let actStart = i + 12
-            let actEnd   = min(i + recLen, bytes.count - 1)
-            
-            // Validar que la mayoría de los registros tengan minutos válidos (< 1440)
-            for ai in stride(from: actStart, to: actEnd - 1, by: 2) {
-                guard ai + 1 < bytes.count else { break }
-                let hi = UInt16(bytes[ai])
-                let lo = UInt16(bytes[ai + 1])
-                let word = hi << 8 | lo
-                let minutes = Int(word & 0x07FF)
-                if minutes < 1440 { goodCount += 1 }
-            }
-            
-            let totalWords = (actEnd - actStart) / 2
-            guard totalWords > 0, goodCount > totalWords / 2 else {
-                i += 1
-                continue
-            }
-            
-            print("DDDParser: heurístico encontró registro en offset \(i), fecha=\(recordDate) (ajustada=\(adjustedRecordDate))")
-            
-            // Filtramos solo las actividades del CONDUCTOR (slot 0) y excluimos extracciones de tarjeta
-            var driverActivities: [(minute: Int, activityCode: Int, actType: ActivityType)] = []
-            
-            for ai in stride(from: actStart, to: actEnd - 1, by: 2) {
-                guard ai + 1 < bytes.count else { break }
+            if ts >= validTsMin && ts <= validTsMax {
+                let recordDate = Date(timeIntervalSince1970: TimeInterval(ts))
+                let adjustedRecordDate = recordDate.addingTimeInterval(7 * 3600)
                 
-                let hi = UInt16(bytes[ai])
-                let lo = UInt16(bytes[ai + 1])
-                let word = hi << 8 | lo
+                var goodCount = 0
+                let actStart = i + 12
+                let actEnd   = min(i + recLen, bytes.count - 1)
                 
-                // Bits según especificación:
-                // Bit 15: s - ranura (0=conductor, 1=segundo conductor)
-                // Bit 14: c - régimen de conducción
-                // Bit 13: p - estado de tarjeta (0=insertada, 1=no insertada)
-                // Bits 12-11: aa - tipo de actividad
-                // Bits 10-0: t - minutos desde 00:00
-                
-                let slot = Int((word >> 15) & 0x01)  // Solo ranura 0 (conductor)
-                let cardOut = Int((word >> 13) & 0x01)  // 0=insertada, 1=no insertada
-                let activityCode = Int((word >> 11) & 0x03)
-                let minutes = Int(word & 0x07FF)
-                
-                // Solo procesamos actividades del conductor (slot 0)
-                // Y solo cuando la tarjeta está insertada (cardOut == 0)
-                guard slot == 0 && cardOut == 0 && minutes < 1440 else { continue }
-                
-                let actType: ActivityType
-                switch activityCode {
-                case 0: actType = .breakOrRest
-                case 1: actType = .availability
-                case 2: actType = .work
-                case 3: actType = .driving
-                default: actType = .unknown
+                for ai in stride(from: actStart, to: actEnd - 1, by: 2) {
+                    guard ai + 1 < bytes.count else { break }
+                    let word = UInt16(bytes[ai]) << 8 | UInt16(bytes[ai + 1])
+                    if (word & 0x07FF) < 1440 { goodCount += 1 }
                 }
                 
-                driverActivities.append((minute: minutes, activityCode: activityCode, actType: actType))
-            }
-            
-            // Ordenar por minuto para asegurar secuencia correcta
-            driverActivities.sort { $0.minute < $1.minute }
-            
-            // Calcular duraciones entre cambios consecutivos
-            for i in 0..<driverActivities.count {
-                let current = driverActivities[i]
-                
-                // Lógica de cierre de actividad (Heurística mejorada)
-                var nextMinute: Int
-                if i + 1 < driverActivities.count {
-                    nextMinute = driverActivities[i + 1].minute
-                } else {
-                    if current.activityCode == 0 { // .breakOrRest
-                        nextMinute = 1440
-                    } else {
-                        nextMinute = min(current.minute + 1, 1440)
+                let totalWords = (actEnd - actStart) / 2
+                if totalWords > 0 && goodCount > totalWords / 2 {
+                    print("DDDParser: heurístico Step 4 encontró registro en offset \(i)")
+                    var step4Acts: [DriverActivity] = []
+                    for ai in stride(from: actStart, to: actEnd - 1, by: 2) {
+                        guard ai + 1 < bytes.count else { break }
+                        let word = UInt16(bytes[ai]) << 8 | UInt16(bytes[ai + 1])
+                        let slot = Int((word >> 15) & 0x01)
+                        let cardOut = Int((word >> 13) & 0x01)
+                        let activityCode = Int((word >> 11) & 0x03)
+                        let minutes = Int(word & 0x07FF)
+                        
+                        guard slot == 0 && cardOut == 0 && minutes < 1440 else { continue }
+                        
+                        let actType: ActivityType
+                        switch activityCode {
+                        case 0: actType = .breakOrRest
+                        case 1: actType = .availability
+                        case 2: actType = .work
+                        case 3: actType = .driving
+                        default: actType = .unknown
+                        }
+                        
+                        let start = adjustedRecordDate.addingTimeInterval(TimeInterval(minutes * 60))
+                        let isDupe = (uniqueActivities + step4Acts).contains { existing in
+                            abs(existing.start.timeIntervalSince(start)) < 60 && existing.type == actType
+                        }
+                        
+                        if !isDupe {
+                            // Determinamos duración (heurística simple para este paso)
+                            step4Acts.append(DriverActivity(type: actType, start: start, duration: 60, isSlotInserted: true, vehiclePlate: nil))
+                        }
                     }
-                }
-                
-                if nextMinute > current.minute {
-                    let durationSecs = Double((nextMinute - current.minute) * 60)
-                    let start = adjustedRecordDate.addingTimeInterval(TimeInterval(current.minute * 60))
-                    let end = start.addingTimeInterval(durationSecs)
-                    
-                    // Ignorar actividades de duración muy corta (< 1 minuto) como ruido
-                    if durationSecs >= 60 {
-                        activities.append(DriverActivity(
-                            type: current.actType,
-                            start: start,
-                            duration: durationSecs,
-                            isSlotInserted: true,
-                            vehiclePlate: nil
-                        ))
-                    }
+                    uniqueActivities.append(contentsOf: step4Acts)
+                    i += recLen
+                    continue
                 }
             }
-            
-            i += recLen
+            i += 1
         }
         
-        return activities
+        print("DDDParser: Actividades finales tras Step 4: \(uniqueActivities.count)")
+        return uniqueActivities
     }
+
     
     // MARK: - Driver Info Extraction
     
