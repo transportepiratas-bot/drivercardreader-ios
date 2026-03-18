@@ -883,11 +883,12 @@ class DDDParser {
         
         return uniqueActivities
     }
-            }
-            i += 1
-        }
-        
-        // Segundo: escaneo general buscando registros de actividad
+
+    private func scanForDailyRecordsV2(bytes: [UInt8], result: inout TachoBinaryData) -> [DriverActivity] {
+        var activities: [DriverActivity] = []
+        let validTsMin: UInt32 = 1451606400 // 2016-01-01
+        let validTsMax: UInt32 = UInt32(Date().timeIntervalSince1970) + 365 * 86400
+
         print("DDDParser: escaneo general de registros...")
         i = 0
         while i + 12 < bytes.count {
@@ -1210,4 +1211,6 @@ class ReaderViewModel: ObservableObject {
                 }
             }
     }
+}
+
 }
