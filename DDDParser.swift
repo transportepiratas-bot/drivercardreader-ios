@@ -1209,6 +1209,5 @@ class ReaderViewModel: ObservableObject {
                     self.statusMessage = "Error: formato de archivo no compatible"
                 }
             }
-        }
     }
 }
