@@ -1048,10 +1048,9 @@ class DDDParser {
                     }
                     
                     if firstUseSec > 0 {
-                        // Aplicar el mismo desfase de 7 horas que a las actividades
-                        let offsetSpan: TimeInterval = 7 * 3600
-                        let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec)).addingTimeInterval(offsetSpan)
-                        let endDate = lastUseSec == 0 ? Date().addingTimeInterval(86400 * 365) : Date(timeIntervalSince1970: TimeInterval(lastUseSec)).addingTimeInterval(offsetSpan)
+                        // Las fechas de los vehículos ya vienen bien en la tarjeta (UTC normal), no necesitan desfase
+                        let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec))
+                        let endDate = lastUseSec == 0 ? Date().addingTimeInterval(86400 * 365) : Date(timeIntervalSince1970: TimeInterval(lastUseSec))
                         
                         result.vehicleUsage.append(VehicleUsageRecord(plate: cleanPlate, start: startDate, end: endDate, initialOdometer: initialOdometer, finalOdometer: finalOdometer))
                     }
