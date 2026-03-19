@@ -678,7 +678,6 @@ class DDDParser {
                 if nextMinute > current.minute {
                     let durationSecs = Double((nextMinute - current.minute) * 60)
                     let start = adjustedRecordDate.addingTimeInterval(TimeInterval(current.minute * 60))
-                    let end = start.addingTimeInterval(durationSecs)
                     
                     // Ignorar actividades de duración muy corta (< 1 minuto) como ruido
                     if durationSecs >= 60 {
@@ -883,12 +882,13 @@ class DDDParser {
         
         // 4. Escaneo adicional buscando bloques TGD con cabecera (FID+Type+Length)
         print("DDDParser: buscando bloques TGD con cabecera FID+Type+Length...")
-        var i = 0
+        i = 0
         while i + 12 < bytes.count {
-            // let prevLen = Int(bytes[i]) << 8 | Int(bytes[i + 1])
-            let recLen  = Int(bytes[i + 2]) << 8 | Int(bytes[i + 3])
+            let recLen = Int(bytes[i + 2]) << 8 | Int(bytes[i + 3])
             
-            guard recLen >= 12, recLen <= 30000, i + recLen <= bytes.count else {
+            let currentI = i
+            let dataCount = bytes.count
+            guard recLen >= 12, recLen <= 30000, currentI + recLen <= dataCount else {
                 i += 1
                 continue
             }
