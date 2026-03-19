@@ -97,9 +97,8 @@ jobs:
         echo "Payload:"
         ls -la Payload/DriverCardReader.app/ | head -15
         
-        cd Payload
-        zip -r ../DriverCardReader.ipa . -x "*.DS_Store"
-        cd ..
+        # Package the Payload directory itself, not its contents
+        zip -r DriverCardReader.ipa Payload -x "*.DS_Store"
         
         ls -lh DriverCardReader.ipa
         unzip -l DriverCardReader.ipa | head -20
