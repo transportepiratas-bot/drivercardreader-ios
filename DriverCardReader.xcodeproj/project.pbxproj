@@ -9,6 +9,7 @@
 /* BEGIN PBXBuildFile */
 		A1B2C3D4E5F67890 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F67891 /* App.swift */; };
 		A1B2C3D4E5F67892 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F67893 /* ContentView.swift */; };
+		A1B2C3D4E5F678C1 /* VehiclesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F678C2 /* VehiclesView.swift */; };
 		A1B2C3D4E5F67894 /* DDDParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F67895 /* DDDParser.swift */; };
 		A1B2C3D4E5F67896 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F67897 /* ReaderView.swift */; };
 		A1B2C3D4E5F67898 /* ArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F67899 /* ArchiveView.swift */; };
@@ -35,6 +36,7 @@
 /* BEGIN PBXFileReference */
 		A1B2C3D4E5F67891 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F67893 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F678C2 /* VehiclesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehiclesView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F67895 /* DDDParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DDDParser.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F67897 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F67899 /* ArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveView.swift; sourceTree = "<group>"; };
@@ -65,6 +67,7 @@
 			children = (
 				A1B2C3D4E5F67891 /* App.swift */,
 				A1B2C3D4E5F67893 /* ContentView.swift */,
+				A1B2C3D4E5F678C2 /* VehiclesView.swift */,
 				A1B2C3D4E5F67895 /* DDDParser.swift */,
 				A1B2C3D4E5F67897 /* ReaderView.swift */,
 				A1B2C3D4E5F67899 /* ArchiveView.swift */,
@@ -168,6 +171,7 @@
 			files = (
 				A1B2C3D4E5F67890 /* App.swift in Sources */,
 				A1B2C3D4E5F67892 /* ContentView.swift in Sources */,
+				A1B2C3D4E5F678C1 /* VehiclesView.swift in Sources */,
 				A1B2C3D4E5F67894 /* DDDParser.swift in Sources */,
 				A1B2C3D4E5F67896 /* ReaderView.swift in Sources */,
 				A1B2C3D4E5F67898 /* ArchiveView.swift in Sources */,
