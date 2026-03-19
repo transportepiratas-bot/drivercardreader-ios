@@ -17,7 +17,7 @@ class DDDParser {
         var events: [TachoEvent] = []
         var shifts: [TachoShift] = []
         var vehicles: [String] = []
-        var vehicleUsage: [(plate: String, start: Date, end: Date)] = []
+        var vehicleUsage: [VehicleUsageRecord] = []
         var countries: [String] = []
         var speedProfile: [SpeedRecord] = []
         var dailyMileage: [DailyMileage] = []
@@ -1009,6 +1009,10 @@ class DDDParser {
         var plates: [String] = []
         
         while offset + 31 <= payload.count {
+            // Odometer is 3 bytes (offset+0 and offset+3)
+            let initialOdometer = Int(payload[offset]) << 16 | Int(payload[offset + 1]) << 8 | Int(payload[offset + 2])
+            let finalOdometer = Int(payload[offset + 3]) << 16 | Int(payload[offset + 4]) << 8 | Int(payload[offset + 5])
+            
             // vehicleFirstUse (offset+6, 4 bytes)
             let firstUseSec = UInt32(payload[offset + 6]) << 24 |
                               UInt32(payload[offset + 7]) << 16 |
@@ -1035,11 +1039,11 @@ class DDDParser {
                     
                     if firstUseSec > 0 {
                         // Aplicar el mismo desfase de 7 horas que a las actividades
-                        let offset: TimeInterval = 7 * 3600
-                        let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec)).addingTimeInterval(offset)
-                        let endDate = lastUseSec == 0 ? Date().addingTimeInterval(86400 * 365) : Date(timeIntervalSince1970: TimeInterval(lastUseSec)).addingTimeInterval(offset)
+                        let offsetSpan: TimeInterval = 7 * 3600
+                        let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec)).addingTimeInterval(offsetSpan)
+                        let endDate = lastUseSec == 0 ? Date().addingTimeInterval(86400 * 365) : Date(timeIntervalSince1970: TimeInterval(lastUseSec)).addingTimeInterval(offsetSpan)
                         
-                        result.vehicleUsage.append((plate: cleanPlate, start: startDate, end: endDate))
+                        result.vehicleUsage.append(VehicleUsageRecord(plate: cleanPlate, start: startDate, end: endDate, initialOdometer: initialOdometer, finalOdometer: finalOdometer))
                     }
                 }
             }
@@ -1084,6 +1088,7 @@ class ReaderViewModel: ObservableObject {
     @Published var speedViolationsCount: Int = 0
     @Published var events: [TachoEvent] = []
     @Published var shifts: [TachoShift] = []
+    @Published var vehiclesUsed: [VehicleUsageRecord] = []
     
     private let parser = DDDParser()
     
@@ -1106,6 +1111,7 @@ class ReaderViewModel: ObservableObject {
                     self.planningInfo = parsed.planning
                     self.events = parsed.events
                     self.shifts = parsed.shifts
+                    self.vehiclesUsed = parsed.vehicleUsage
                     
                     guard !parsed.activities.isEmpty else {
                         self.statusMessage = "Sin actividades – formato no reconocido"

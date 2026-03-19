@@ -54,6 +54,12 @@ struct ContentView: View {
                 .tabItem {
                     Label("Faltas", systemImage: "exclamationmark.triangle")
                 }
+                
+            VehiclesView()
+                .environmentObject(readerVM)
+                .tabItem {
+                    Label("Vehículos", systemImage: "car.fill")
+                }
             
             EventsView()
                 .environmentObject(readerVM)

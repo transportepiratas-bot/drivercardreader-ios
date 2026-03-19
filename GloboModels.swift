@@ -17,6 +17,22 @@ public struct Driver: Identifiable, Codable {
     public let expiryDate: Date?
 }
 
+public struct VehicleUsageRecord: Identifiable, Codable {
+    public var id = UUID()
+    public let plate: String
+    public let start: Date
+    public let end: Date
+    public let initialOdometer: Int
+    public let finalOdometer: Int
+    
+    public var distance: Int {
+        return max(0, finalOdometer - initialOdometer)
+    }
+    public var duration: TimeInterval {
+        return end.timeIntervalSince(start)
+    }
+}
+
 public struct DriverActivity: Identifiable, Codable {
     public var id = UUID()
     public let type: ActivityType
