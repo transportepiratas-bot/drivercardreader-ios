@@ -66,6 +66,26 @@ struct ContentView: View {
                 .tabItem {
                     Label("Eventos", systemImage: "bolt.badge.a.fill")
                 }
+            
+            NavigationView {
+                PlanningView()
+                    .environmentObject(readerVM)
+            }
+            .tabItem {
+                Label("Pronóstico", systemImage: "timer")
+            }
+            
+            CountriesView()
+                .environmentObject(readerVM)
+                .tabItem {
+                    Label("Países", systemImage: "globe.europe.africa")
+                }
+            
+            FileContentView()
+                .environmentObject(readerVM)
+                .tabItem {
+                    Label("Archivo", systemImage: "doc.text")
+                }
         }
         .accentColor(.white)
     }

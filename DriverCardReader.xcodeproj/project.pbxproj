@@ -30,6 +30,8 @@
 		E1F2A3B4C5D67891 /* TachoConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D67890 /* TachoConstants.swift */; };
 		F1E2D3C4B5A67890 /* TachoProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2D3C4B5A67891 /* TachoProgressBar.swift */; };
 		B1C2D3E4F5A67899 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A67898 /* EventsView.swift */; };
+		C2D3E4F5A6B78900 /* CountriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D3E4F5A6B78901 /* CountriesView.swift */; };
+		C2D3E4F5A6B78902 /* FileContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D3E4F5A6B78903 /* FileContentView.swift */; };
 		A9A9A9A9A9A9A9A9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F678D0 /* Assets.xcassets */; };
 /* END PBXBuildFile */
 
@@ -59,6 +61,8 @@
 		E1F2A3B4C5D67890 /* TachoConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TachoConstants.swift; sourceTree = "<group>"; };
 		F1E2D3C4B5A67891 /* TachoProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TachoProgressBar.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5A67898 /* EventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsView.swift; sourceTree = "<group>"; };
+		C2D3E4F5A6B78901 /* CountriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountriesView.swift; sourceTree = "<group>"; };
+		C2D3E4F5A6B78903 /* FileContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileContentView.swift; sourceTree = "<group>"; };
 /* END PBXFileReference */
 
 /* BEGIN PBXGroup */
@@ -90,6 +94,8 @@
 				E1F2A3B4C5D67890 /* TachoConstants.swift */,
 				F1E2D3C4B5A67891 /* TachoProgressBar.swift */,
 				B1C2D3E4F5A67898 /* EventsView.swift */,
+				C2D3E4F5A6B78901 /* CountriesView.swift */,
+				C2D3E4F5A6B78903 /* FileContentView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -192,6 +198,8 @@
 				E1F2A3B4C5D67891 /* TachoConstants.swift in Sources */,
 				F1E2D3C4B5A67890 /* TachoProgressBar.swift in Sources */,
 				B1C2D3E4F5A67899 /* EventsView.swift in Sources */,
+				C2D3E4F5A6B78900 /* CountriesView.swift in Sources */,
+				C2D3E4F5A6B78902 /* FileContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

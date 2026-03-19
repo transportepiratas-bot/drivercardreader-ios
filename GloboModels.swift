@@ -130,3 +130,22 @@ public struct PlanningInfo: Codable {
 
     public var nextDownloadDue: Date?
 }
+
+/// Registro de entrada/salida de un país (Países tab)
+public struct CountryRecord: Identifiable, Codable {
+    public var id = UUID()
+    public let weekNumber: Int
+    public let date: Date
+    public let country: String
+    public let region: String
+    public let odometer: Int
+    public let mode: String // "Inicio" o "Final"
+}
+
+/// Bloque de contenido del archivo TGD (Contenido del archivo tab) 
+public struct FileContentBlock: Identifiable {
+    public var id = UUID()
+    public let name: String
+    public let status: String // "disponible", "válido", "no disponible"
+    public let isSignature: Bool
+}
