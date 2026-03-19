@@ -5,7 +5,13 @@ struct VehiclesView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HeaderView(title: "Uso de Vehículos")
+            Text("Uso de Vehículos")
+                .font(.largeTitle)
+                .bold()
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "#0F172A"))
             
             if readerVM.vehiclesUsed.isEmpty {
                 VStack(spacing: 20) {
