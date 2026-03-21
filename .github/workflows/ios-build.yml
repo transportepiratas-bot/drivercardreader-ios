@@ -21,23 +21,6 @@ jobs:
       with:
         xcode-version: 'latest-stable'
     
-    - name: Create Self-Signed Certificate
-      run: |
-        # Generate a self-signed certificate
-        openssl req -new -x509 -days 365 -nodes \
-          -subj "/CN=DriverCardReader/O=DriverCardReader/C=ES" \
-          -keyout private.key -out certificate.cer \
-          -newkey rsa:2048
-        
-        # Create a P12 file
-        openssl pkcs12 -export \
-          -in certificate.cer -inkey private.key \
-          -out certificate.p12 -password pass:
-        
-        # Import the certificate into the login keychain
-        security import certificate.p12 \
-          -k ~/Library/Keychains/login.keychain-db -P "" -T /usr/bin/codesign
-        
     - name: Build and Archive
       run: |
         xcodebuild archive \
@@ -46,7 +29,7 @@ jobs:
           -destination 'generic/platform=iOS' \
           -configuration Release \
           -archivePath $PWD/build/DriverCardReader.xcarchive \
-          CODE_SIGN_IDENTITY="DriverCardReader" \
+          CODE_SIGN_IDENTITY="-" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=YES \
           AD_HOC_CODE_SIGNING_ALLOWED=YES \
@@ -58,37 +41,19 @@ jobs:
       run: |
         rm -rf build/ipa
         mkdir -p build/ipa/Payload
+        # ditto avoids metadata issues and is consistent for .app bundles
+        ditto build/DriverCardReader.xcarchive/Products/Applications/*.app build/ipa/Payload/$(ls build/DriverCardReader.xcarchive/Products/Applications/ | grep .app)
         
-        # Find the app
-        APP_PATH=$(find build/DriverCardReader.xcarchive -name "*.app" -type d | head -1)
-        
-        if [ -z "$APP_PATH" ]; then
-          echo "ERROR: App not found in archive"
-          exit 1
-        fi
-        
-        echo "Found app at: $APP_PATH"
-        echo "App contents:"
-        ls -la "$APP_PATH/"
-        
-        # Copy app to Payload
-        ditto "$APP_PATH" "build/ipa/Payload/DriverCardReader.app"
-        
-        echo "Final Payload contents:"
-        ls -la "build/ipa/Payload/DriverCardReader.app/"
-        
-        # Create IPA
         cd build/ipa
+        # Remove ad-hoc signature which can confuse AltStore
+        rm -rf Payload/*.app/_CodeSignature
+        
+        # Use ditto for zipping as it is Apple's standard and guarantees proper structure
         ditto -c -k --sequesterRsrc --keepParent Payload ../../DriverCardReader.ipa
-        cd ../..
         
     - name: Verify IPA Structure
       run: |
-        echo "IPA structure:"
-        unzip -l DriverCardReader.ipa
-        echo ""
-        echo "Checking for embedded.mobileprovision:"
-        unzip -l DriverCardReader.ipa | grep -i provision || echo "NOT FOUND"
+        unzip -l DriverCardReader.ipa | head -n 20
         
     - name: Upload Artifact
       if: success()
