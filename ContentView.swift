@@ -58,7 +58,7 @@ struct ContentView: View {
             VehiclesView()
                 .environmentObject(readerVM)
                 .tabItem {
-                    Label("Vehículos", systemImage: "car.fill")
+                    Label("Vehículos", systemImage: "truck.box.fill")
                 }
             
             EventsView()

@@ -219,7 +219,7 @@ struct DriverInfoHeader: View {
                                 }
                             }) {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "car.fill")
+                                    Image(systemName: "truck.box.fill")
                                         .font(.caption)
                                     Text(vehicle)
                                         .font(.caption)

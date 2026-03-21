@@ -380,7 +380,7 @@ struct VehiclesCard: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: "car.fill")
+                        Image(systemName: "truck.box.fill")
                             .foregroundColor(selectedVehicle == vehicle ? .globoAccent : .gray)
                         Text(vehicle)
                             .font(.subheadline)

@@ -15,7 +15,7 @@ struct VehiclesView: View {
             
             if readerVM.vehiclesUsed.isEmpty {
                 VStack(spacing: 20) {
-                    Image(systemName: "car.fill")
+                    Image(systemName: "truck.box.fill")
                         .font(.system(size: 60))
                         .foregroundColor(.gray)
                     Text("No hay datos de vehículos disponibles.")

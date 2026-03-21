@@ -69,12 +69,8 @@ class DDDParser {
         let activitiesFromBlocks = result.activities
         parseTGDBlocks(bytes: bytes, result: &result)
         
-        // 2. Si los bloques encontraron actividades, no hacemos fallback
-        // Si no encontraron nada, usamos escaneo heurístico
-        if result.activities.isEmpty {
-            print("DDDParser: usando escaneo heurístico de registros diarios")
-            result.activities = scanForDailyRecords(bytes: bytes, result: &result)
-        }
+        // 2. Usar solo parser de bloques TGD (no heurístico para evitar duplicados)
+        print("DDDParser: Parser TGD encontró \(result.activities.count) actividades")
         
         // 3. Extraer nombre del conductor si no se encontró
         if result.driverSurname == "DESCONOCIDO" || result.driverSurname.isEmpty {
@@ -1271,8 +1267,17 @@ class DDDParser {
         guard offset >= 0, offset + length <= bytes.count else { return "" }
         let sub = Array(bytes[offset ..< offset + length])
         
-        // Filter out control characters (bytes < 32 except space) and null bytes
-        let filtered = sub.filter { $0 >= 32 || $0 == 32 }
+        // Find first printable ASCII character (A-Z, a-z, space)
+        var startIndex = 0
+        for (i, byte) in sub.enumerated() {
+            if (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122) || byte == 32 {
+                startIndex = i
+                break
+            }
+        }
+        
+        // Extract from start index, filtering non-printable chars
+        let filtered = Array(sub[startIndex...]).filter { ($0 >= 32 && $0 < 127) || $0 == 32 }
         
         return (String(bytes: filtered, encoding: .isoLatin1) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)

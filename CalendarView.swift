@@ -21,26 +21,74 @@ struct CalendarView: View {
                         .pickerStyle(SegmentedPickerStyle())
                         
                         Spacer()
-                        
-                        // Picker de vehículo
-                        if !data.vehicles.isEmpty {
-                            Picker("Vehículo", selection: $selectedVehicle) {
-                                Text("Todos").tag("Todos")
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
+                    // Botones de filtro por vehículo
+                    if !data.vehicles.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                // Botón "Todos"
+                                Button(action: {
+                                    selectedVehicle = "Todos"
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "list.bullet")
+                                            .font(.caption2)
+                                        Text("Todos")
+                                            .font(.caption2)
+                                            .bold()
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(selectedVehicle == "Todos" ? Color.globoAccent.opacity(0.4) : Color.white.opacity(0.1))
+                                    .cornerRadius(20)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(selectedVehicle == "Todos" ? Color.globoAccent : Color.clear, lineWidth: 1)
+                                    )
+                                }
+                                .foregroundColor(.white)
+                                
+                                // Botones de vehículos
                                 ForEach(data.vehicles, id: \.self) { vehicle in
-                                    Text(vehicle).tag(vehicle)
+                                    Button(action: {
+                                        if selectedVehicle == vehicle {
+                                            selectedVehicle = "Todos"
+                                        } else {
+                                            selectedVehicle = vehicle
+                                        }
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "truck.box.fill")
+                                                .font(.caption2)
+                                            Text(vehicle)
+                                                .font(.caption2)
+                                                .bold()
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(selectedVehicle == vehicle ? Color.globoAccent.opacity(0.4) : Color.white.opacity(0.1))
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(selectedVehicle == vehicle ? Color.globoAccent : Color.clear, lineWidth: 1)
+                                        )
+                                    }
+                                    .foregroundColor(.white)
                                 }
                             }
-                            .pickerStyle(MenuPickerStyle())
-                            .frame(width: 150)
+                            .padding(.horizontal)
                         }
+                        .background(Color.black.opacity(0.1))
                     }
-                    .padding()
                     
                     // Información del vehículo seleccionado
                     if selectedVehicle != "Todos" {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Image(systemName: "car.fill")
+                                Image(systemName: "truck.box.fill")
                                     .foregroundColor(.globoAccent)
                                 Text(selectedVehicle)
                                     .font(.headline)
@@ -681,7 +729,7 @@ struct DayDetailSheet: View {
                                 
                                 if dayTotals.distance > 0 {
                                     HStack {
-                                        Image(systemName: "car.fill")
+                                        Image(systemName: "truck.box.fill")
                                             .foregroundColor(.globoAccent)
                                         Text(String(format: "%.0f km", dayTotals.distance))
                                             .foregroundColor(.white)
