@@ -45,8 +45,6 @@ jobs:
         ditto build/DriverCardReader.xcarchive/Products/Applications/*.app build/ipa/Payload/$(ls build/DriverCardReader.xcarchive/Products/Applications/ | grep .app)
         
         cd build/ipa
-        # Remove ad-hoc signature which can confuse AltStore
-        rm -rf Payload/*.app/_CodeSignature
         
         # Use ditto for zipping as it is Apple's standard and guarantees proper structure
         ditto -c -k --sequesterRsrc --keepParent Payload ../../DriverCardReader.ipa
