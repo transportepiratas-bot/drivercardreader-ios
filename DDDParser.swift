@@ -71,19 +71,9 @@ class DDDParser {
         
         // 2. Si los bloques encontraron actividades, no hacemos fallback
         // Si no encontraron nada, usamos escaneo heurístico
-        if result.activities.isEmpty && activitiesFromBlocks.isEmpty {
+        if result.activities.isEmpty {
             print("DDDParser: usando escaneo heurístico de registros diarios")
             result.activities = scanForDailyRecords(bytes: bytes, result: &result)
-        } else if result.activities.count < 10 {
-            // Si hay pocas actividades, complementar con heurístico
-            print("DDDParser: complementando con escaneo heurístico")
-            let heuristicActs = scanForDailyRecords(bytes: bytes, result: &result)
-            // Añadir actividades únicas
-            for act in heuristicActs {
-                if !result.activities.contains(where: { abs($0.start.timeIntervalSince(act.start)) < 60 && $0.type == act.type }) {
-                    result.activities.append(act)
-                }
-            }
         }
         
         // 3. Extraer nombre del conductor si no se encontró
@@ -1280,7 +1270,11 @@ class DDDParser {
     private func extractString(from bytes: [UInt8], offset: Int, length: Int) -> String {
         guard offset >= 0, offset + length <= bytes.count else { return "" }
         let sub = Array(bytes[offset ..< offset + length])
-        return (String(bytes: sub, encoding: .isoLatin1) ?? "")
+        
+        // Filter out control characters (bytes < 32 except space) and null bytes
+        let filtered = sub.filter { $0 >= 32 || $0 == 32 }
+        
+        return (String(bytes: filtered, encoding: .isoLatin1) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "\0", with: "")
             .trimmingCharacters(in: .whitespaces)

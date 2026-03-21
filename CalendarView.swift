@@ -601,10 +601,23 @@ struct DayDetailSheet: View {
         return f
     }
     
+    private func formatTime(_ hours: Double) -> String {
+        let totalMinutes = Int(hours * 60)
+        let h = totalMinutes / 60
+        let m = totalMinutes % 60
+        if h == 0 {
+            return "\(m)m"
+        } else if m == 0 {
+            return "\(h)h"
+        } else {
+            return "\(h)h \(m)m"
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
-                Color.globoBlue.edgesIgnoringSafeArea(.all)
+                Color.black.edgesIgnoringSafeArea(.all)
                 
                 if dayActivities.isEmpty {
                     VStack {
@@ -626,7 +639,7 @@ struct DayDetailSheet: View {
                                 
                                 HStack(spacing: 20) {
                                     VStack {
-                                        Text(String(format: "%.1fh", dayTotals.driving))
+                                        Text(formatTime(dayTotals.driving))
                                             .font(.title2)
                                             .bold()
                                             .foregroundColor(.globoAccent)
@@ -636,7 +649,7 @@ struct DayDetailSheet: View {
                                     }
                                     
                                     VStack {
-                                        Text(String(format: "%.1fh", dayTotals.work))
+                                        Text(formatTime(dayTotals.work))
                                             .font(.title2)
                                             .bold()
                                             .foregroundColor(.globoWarning)
@@ -646,7 +659,7 @@ struct DayDetailSheet: View {
                                     }
                                     
                                     VStack {
-                                        Text(String(format: "%.1fh", dayTotals.rest))
+                                        Text(formatTime(dayTotals.rest))
                                             .font(.title2)
                                             .bold()
                                             .foregroundColor(.globoSuccess)
@@ -656,7 +669,7 @@ struct DayDetailSheet: View {
                                     }
                                     
                                     VStack {
-                                        Text(String(format: "%.1fh", dayTotals.avail))
+                                        Text(formatTime(dayTotals.avail))
                                             .font(.title2)
                                             .bold()
                                             .foregroundColor(.blue)
@@ -772,6 +785,15 @@ struct DayDetailSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Atrás")
+                        }
+                        .foregroundColor(.globoAccent)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cerrar") {
                         dismiss()
