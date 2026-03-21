@@ -21,39 +21,51 @@ jobs:
       with:
         xcode-version: 'latest-stable'
     
-    - name: Build and Archive
+    - name: Build for iOS
       run: |
-        xcodebuild archive \
+        xcodebuild build \
           -project DriverCardReader.xcodeproj \
           -scheme "DriverCardReader" \
-          -destination 'generic/platform=iOS' \
           -configuration Release \
-          -archivePath $PWD/build/DriverCardReader.xcarchive \
-          CODE_SIGN_IDENTITY="-" \
+          -destination 'generic/platform=iOS' \
+          -derivedDataPath ./DerivedData \
+          CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=YES \
-          AD_HOC_CODE_SIGNING_ALLOWED=YES \
-          DEVELOPMENT_TEAM="" \
-          ARCHS=arm64 \
-          SDKROOT=iphoneos
+          CODE_SIGNING_ALLOWED=NO \
+          ENABLE_BITCODE=NO
           
     - name: Create IPA
       run: |
-        rm -rf build/ipa
-        mkdir -p build/ipa/Payload
-        # ditto avoids metadata issues and is consistent for .app bundles
-        ditto build/DriverCardReader.xcarchive/Products/Applications/*.app build/ipa/Payload/$(ls build/DriverCardReader.xcarchive/Products/Applications/ | grep .app)
+        # Find the built .app
+        APP_PATH=$(find ./DerivedData -name "DriverCardReader.app" -type d | head -1)
         
-        cd build/ipa
-        # Remove ad-hoc signature which can confuse AltStore
-        rm -rf Payload/*.app/_CodeSignature
+        if [ -z "$APP_PATH" ]; then
+          echo "ERROR: App not found in DerivedData"
+          find ./DerivedData -name "*.app" -type d
+          exit 1
+        fi
         
-        # Use ditto for zipping as it is Apple's standard and guarantees proper structure
-        ditto -c -k --sequesterRsrc --keepParent Payload ../../DriverCardReader.ipa
+        echo "Found app at: $APP_PATH"
+        
+        # Create Payload structure
+        rm -rf Payload
+        mkdir -p Payload
+        cp -R "$APP_PATH" Payload/
+        
+        # List contents to verify
+        echo "Payload contents:"
+        ls -la Payload/DriverCardReader.app/
+        
+        # Create IPA using zip (compatible with AltStore)
+        zip -r DriverCardReader.ipa Payload -x "*.DS_Store"
         
     - name: Verify IPA Structure
       run: |
-        unzip -l DriverCardReader.ipa | head -n 20
+        echo "IPA structure:"
+        unzip -l DriverCardReader.ipa | head -n 30
+        echo ""
+        echo "File size:"
+        ls -lh DriverCardReader.ipa
         
     - name: Upload Artifact
       if: success()
