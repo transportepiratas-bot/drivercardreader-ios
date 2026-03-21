@@ -264,11 +264,11 @@ struct DetailRow: View {
 struct DriverCard: View {
     let data: DDDParser.TachoBinaryData
     
-    private var utcDateFormatter: DateFormatter {
+    private var localDateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .none
-        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.timeZone = TimeZone.current
         return f
     }
     
@@ -305,7 +305,7 @@ struct DriverCard: View {
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.4))
                         if let firstActivity = data.activities.min(by: { $0.start < $1.start }) {
-                            Text(utcDateFormatter.string(from: firstActivity.start))
+                            Text(localDateFormatter.string(from: firstActivity.start))
                                 .font(.caption)
                                 .foregroundColor(.white)
                         }
@@ -316,7 +316,7 @@ struct DriverCard: View {
                             .font(.caption2)
                             .foregroundColor(.white.opacity(0.4))
                         if let lastActivity = data.activities.max(by: { $0.start < $1.start }) {
-                            Text(utcDateFormatter.string(from: lastActivity.start))
+                            Text(localDateFormatter.string(from: lastActivity.start))
                                 .font(.caption)
                                 .foregroundColor(.white)
                         }

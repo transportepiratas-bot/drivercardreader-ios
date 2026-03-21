@@ -104,8 +104,11 @@ class DDDParser {
         if !result.vehicleUsage.isEmpty {
             for i in 0..<result.activities.count {
                 let activity = result.activities[i]
+                let activityEnd = activity.start.addingTimeInterval(activity.duration)
+                
                 for usage in result.vehicleUsage {
-                    if activity.start >= usage.start && activity.start <= usage.end {
+                    // Verificar si la actividad se superpone con el uso del vehículo
+                    if activity.start <= usage.end && activityEnd >= usage.start {
                         result.activities[i].vehiclePlate = usage.plate
                         break
                     }
@@ -362,9 +365,9 @@ class DDDParser {
             }
             
             let recordDate = Date(timeIntervalSince1970: TimeInterval(ts))
-            let adjustedRecordDate = recordDate.addingTimeInterval(7 * 3600)
+            let adjustedRecordDate = recordDate
             
-            print("DDDParser: VU registro diario fecha=\(recordDate) (ajustada=\(adjustedRecordDate)) recLen=\(recLen)")
+            print("DDDParser: VU registro diario fecha=\(recordDate) recLen=\(recLen)")
             
             // Parsear actividades del VU
             // En VU, las actividades también usan ActivityChangeInfo de 2 bytes
@@ -614,10 +617,10 @@ class DDDParser {
             
             let recordDate = Date(timeIntervalSince1970: TimeInterval(ts))
             
-            // Corrección de desfase detectado: +7 horas
-            let adjustedRecordDate = recordDate.addingTimeInterval(7 * 3600)
+            // Usamos la fecha original UTC (el desfase de 7 horas era incorrecto)
+            let adjustedRecordDate = recordDate
             
-            print("DDDParser: registro diario fecha=\(recordDate) (ajustada=\(adjustedRecordDate)) recLen=\(recLen)")
+            print("DDDParser: registro diario fecha=\(recordDate) recLen=\(recLen)")
             
             // Parse ActivityChangeInfo records (start at offset 12 = after header)
             let actStart = idx + 12
@@ -908,7 +911,7 @@ class DDDParser {
             
             if ts >= validTsMin && ts <= validTsMax {
                 let recordDate = Date(timeIntervalSince1970: TimeInterval(ts))
-                let adjustedRecordDate = recordDate.addingTimeInterval(7 * 3600)
+                let adjustedRecordDate = recordDate
                 
                 var goodCount = 0
                 let actStart = i + 12
@@ -1050,7 +1053,8 @@ class DDDParser {
                     if firstUseSec > 0 {
                         // Las fechas de los vehículos ya vienen bien en la tarjeta (UTC normal), no necesitan desfase
                         let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec))
-                        let endDate = lastUseSec == 0 ? Date().addingTimeInterval(86400 * 365) : Date(timeIntervalSince1970: TimeInterval(lastUseSec))
+                        // Si no hay fecha de fin, usar la fecha actual en lugar de un año en el futuro
+                        let endDate = lastUseSec == 0 ? Date() : Date(timeIntervalSince1970: TimeInterval(lastUseSec))
                         
                         result.vehicleUsage.append(VehicleUsageRecord(plate: cleanPlate, start: startDate, end: endDate, initialOdometer: initialOdometer, finalOdometer: finalOdometer))
                     }

@@ -62,6 +62,7 @@ struct VehicleRecordCard: View {
         df.dateStyle = .medium
         df.timeStyle = .none
         df.locale = Locale(identifier: "es_ES")
+        df.timeZone = TimeZone.current
         return df
     }()
     
@@ -69,6 +70,7 @@ struct VehicleRecordCard: View {
         let df = DateFormatter()
         df.dateStyle = .none
         df.timeStyle = .short
+        df.timeZone = TimeZone.current
         return df
     }()
     

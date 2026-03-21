@@ -279,7 +279,7 @@ struct ActivityRow: View {
     private var timeFormatter: DateFormatter {
         let f = DateFormatter()
         f.timeStyle = .short
-        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.timeZone = TimeZone.current
         return f
     }
     

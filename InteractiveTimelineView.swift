@@ -112,7 +112,7 @@ struct ActivityBlock: View {
     private func activityInfo() -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        formatter.timeZone = TimeZone(secondsFromGMT: 0) // Explicitly use UTC timezone
+        formatter.timeZone = TimeZone.current // Use device's local timezone
         return "\(formatter.string(from: activity.start)) - \(Int(activity.duration/60))min"
     }
 }

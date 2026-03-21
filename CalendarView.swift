@@ -123,7 +123,7 @@ struct CalendarView: View {
     
     private func groupedActivities(_ activities: [DriverActivity]) -> [(key: Date, value: [DriverActivity])] {
         var calendar = Calendar.current
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = TimeZone.current
         let grouped = Dictionary(grouping: activities) { calendar.startOfDay(for: $0.start) }
         return grouped.sorted { $0.key > $1.key }
     }
@@ -137,9 +137,9 @@ struct MonthlyGridView: View {
     @State private var selectedMonth: Date = Date()
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
-    var utccalendar: Calendar {
+    var localCalendar: Calendar {
         var cal = Calendar.current
-        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        cal.timeZone = TimeZone.current
         return cal
     }
     
@@ -211,18 +211,18 @@ struct MonthlyGridView: View {
     private var monthYearString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)!
+        formatter.timeZone = TimeZone.current
         return formatter.string(from: selectedMonth)
     }
     
     private func changeMonth(_ delta: Int) {
-        selectedMonth = utccalendar.date(byAdding: .month, value: delta, to: selectedMonth) ?? selectedMonth
+        selectedMonth = localCalendar.date(byAdding: .month, value: delta, to: selectedMonth) ?? selectedMonth
     }
     
     private func daysInMonth() -> [Int] {
-        let range = utccalendar.range(of: .day, in: .month, for: selectedMonth)!
-        let firstDay = utccalendar.date(from: utccalendar.dateComponents([.year, .month], from: selectedMonth))!
-        let weekday = utccalendar.component(.weekday, from: firstDay)
+        let range = localCalendar.range(of: .day, in: .month, for: selectedMonth)!
+        let firstDay = localCalendar.date(from: localCalendar.dateComponents([.year, .month], from: selectedMonth))!
+        let weekday = localCalendar.component(.weekday, from: firstDay)
         
         var days = [Int]()
         // Ajustar para que lunes = 1
@@ -235,13 +235,13 @@ struct MonthlyGridView: View {
     }
     
     private func getHoursForDay(_ day: Int, type: ActivityType) -> Double {
-        guard let monthInterval = utccalendar.dateInterval(of: .month, for: selectedMonth) else { return 0 }
-        var components = utccalendar.dateComponents([.year, .month], from: selectedMonth)
+        guard let monthInterval = localCalendar.dateInterval(of: .month, for: selectedMonth) else { return 0 }
+        var components = localCalendar.dateComponents([.year, .month], from: selectedMonth)
         components.day = day
-        guard let date = utccalendar.date(from: components) else { return 0 }
+        guard let date = localCalendar.date(from: components) else { return 0 }
         
-        let dayStart = utccalendar.startOfDay(for: date)
-        let dayEnd = utccalendar.date(byAdding: .day, value: 1, to: dayStart)!
+        let dayStart = localCalendar.startOfDay(for: date)
+        let dayEnd = localCalendar.date(byAdding: .day, value: 1, to: dayStart)!
         
         return activities
             .filter { $0.start >= dayStart && $0.start < dayEnd && $0.type == type }
@@ -249,9 +249,9 @@ struct MonthlyGridView: View {
     }
     
     private func getDateForDay(_ day: Int) -> Date? {
-        var components = utccalendar.dateComponents([.year, .month], from: selectedMonth)
+        var components = localCalendar.dateComponents([.year, .month], from: selectedMonth)
         components.day = day
-        return utccalendar.date(from: components)
+        return localCalendar.date(from: components)
     }
 }
 
@@ -378,19 +378,19 @@ struct DayActivityRow: View {
     let activities: [DriverActivity]
     @State private var isExpanded = false
     
-    private var utcDateFormatter: DateFormatter {
+    private var localDateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .none
-        f.timeZone = TimeZone(secondsFromGMT: 0)!
+        f.timeZone = TimeZone.current
         return f
     }
     
-    private var utcTimeFormatter: DateFormatter {
+    private var localTimeFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .none
         f.timeStyle = .short
-        f.timeZone = TimeZone(secondsFromGMT: 0)!
+        f.timeZone = TimeZone.current
         return f
     }
     
@@ -398,7 +398,7 @@ struct DayActivityRow: View {
         VStack(alignment: .leading, spacing: 10) {
             Button(action: { withAnimation { isExpanded.toggle() } }) {
                 HStack {
-                    Text(utcDateFormatter.string(from: date))
+                    Text(localDateFormatter.string(from: date))
                         .font(.subheadline)
                         .bold()
                         .foregroundColor(.white)
@@ -445,7 +445,7 @@ struct DayActivityRow: View {
                                     .font(.caption)
                                     .bold()
                                     .foregroundColor(.white)
-                                Text("\(utcTimeFormatter.string(from: act.start)) - \(utcTimeFormatter.string(from: act.end))")
+                                Text("\(localTimeFormatter.string(from: act.start)) - \(localTimeFormatter.string(from: act.end))")
                                     .font(.system(size: 10))
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -533,7 +533,7 @@ struct ActivitySegment: View {
     
     var body: some View {
         var calendar = Calendar.current
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = TimeZone.current
         let startHour = CGFloat(calendar.component(.hour, from: activity.start))
         let startMin = CGFloat(calendar.component(.minute, from: activity.start))
         let startPos = ((startHour * 60) + startMin) * (totalWidth / 1440)
@@ -562,15 +562,15 @@ struct DayDetailSheet: View {
     let activities: [DriverActivity]
     @Environment(\.dismiss) var dismiss
     
-    private var utccalendar: Calendar {
+    private var localCalendar: Calendar {
         var cal = Calendar.current
-        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        cal.timeZone = TimeZone.current
         return cal
     }
     
     private var dayActivities: [DriverActivity] {
-        let dayStart = utccalendar.startOfDay(for: date)
-        let dayEnd = utccalendar.date(byAdding: .day, value: 1, to: dayStart)!
+        let dayStart = localCalendar.startOfDay(for: date)
+        let dayEnd = localCalendar.date(byAdding: .day, value: 1, to: dayStart)!
         return activities
             .filter { $0.start >= dayStart && $0.start < dayEnd }
             .sorted { $0.start < $1.start }
@@ -589,7 +589,7 @@ struct DayDetailSheet: View {
         let f = DateFormatter()
         f.dateStyle = .full
         f.timeStyle = .none
-        f.timeZone = TimeZone(secondsFromGMT: 0)!
+        f.timeZone = TimeZone.current
         return f
     }
     
@@ -597,7 +597,7 @@ struct DayDetailSheet: View {
         let f = DateFormatter()
         f.dateStyle = .none
         f.timeStyle = .short
-        f.timeZone = TimeZone(secondsFromGMT: 0)!
+        f.timeZone = TimeZone.current
         return f
     }
     
