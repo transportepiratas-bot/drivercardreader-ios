@@ -88,6 +88,9 @@ class DDDParser {
         
         // 5. Asignar vehículos a las actividades basándonos en los tiempos de uso
         if !result.vehicleUsage.isEmpty {
+            print("DDDParser: Asignando vehículos a \(result.activities.count) actividades")
+            print("DDDParser: Hay \(result.vehicleUsage.count) registros de uso de vehículos")
+            
             for i in 0..<result.activities.count {
                 let activity = result.activities[i]
                 let activityEnd = activity.start.addingTimeInterval(activity.duration)
@@ -96,10 +99,16 @@ class DDDParser {
                     // Verificar si la actividad se superpone con el uso del vehículo
                     if activity.start <= usage.end && activityEnd >= usage.start {
                         result.activities[i].vehiclePlate = usage.plate
+                        print("DDDParser: Actividad \(i) (\(activity.type)) asignada a vehículo \(usage.plate)")
                         break
                     }
                 }
             }
+            
+            let assignedCount = result.activities.filter { $0.vehiclePlate != nil }.count
+            print("DDDParser: \(assignedCount) actividades tienen vehículo asignado")
+        } else {
+            print("DDDParser: No hay registros de uso de vehículos")
         }
         
         // 4. Calcular infracciones y planificación (moved from original position)
