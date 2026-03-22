@@ -613,6 +613,7 @@ struct DayDetailSheet: View {
     let date: Date
     let activities: [DriverActivity]
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var readerVM: ReaderViewModel
     
     private var localCalendar: Calendar {
         var cal = Calendar.current
