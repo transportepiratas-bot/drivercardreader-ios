@@ -1267,16 +1267,16 @@ class DDDParser {
         guard offset >= 0, offset + length <= bytes.count else { return "" }
         let sub = Array(bytes[offset ..< offset + length])
         
-        // Find first printable ASCII character (A-Z, a-z, space)
+        // Find first uppercase letter (A-Z) - this is where the actual name starts
         var startIndex = 0
         for (i, byte) in sub.enumerated() {
-            if byte >= 32 && byte < 127 {
+            if byte >= 65 && byte <= 90 { // A-Z
                 startIndex = i
                 break
             }
         }
         
-        // Extract from start index, filtering non-printable chars
+        // Extract from start index, filtering to only printable ASCII
         let filtered = Array(sub[startIndex...]).filter { $0 >= 32 && $0 < 127 }
         
         return (String(bytes: filtered, encoding: .isoLatin1) ?? "")

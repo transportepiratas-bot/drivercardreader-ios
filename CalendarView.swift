@@ -164,6 +164,7 @@ struct CalendarView: View {
             }
             .background(Color.globoBlue.edgesIgnoringSafeArea(.all))
             .navigationTitle("Calendario")
+            .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingDayDetail) {
                 if let day = selectedDay, let data = readerVM.tachoData {
                     DayDetailSheet(date: day, activities: data.activities)
