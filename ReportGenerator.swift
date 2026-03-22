@@ -5,9 +5,21 @@ import UIKit
 class ReportGenerator {
     
     /// Genera un informe PDF profesional con el resumen de actividades e infracciones
-    static func generateActivityReport(data: DDDParser.TachoBinaryData) -> Data? {
+    static func generateActivityReport(data: DDDParser.TachoBinaryData, vehicleFilter: String? = nil) -> Data? {
+        // Filtrar actividades por vehículo si se especifica
+        let filteredActivities: [DriverActivity]
+        let reportTitle: String
+        
+        if let vehicle = vehicleFilter {
+            filteredActivities = data.activities.filter { $0.vehiclePlate == vehicle }
+            reportTitle = "Informe de Conducción - \(vehicle)"
+        } else {
+            filteredActivities = data.activities
+            reportTitle = "Informe de Conducción - \(data.driverName) \(data.driverSurname)"
+        }
+        
         let pdfMetaData = [
-            kCGPDFContextTitle: "Informe de Conducción - \(data.driverName) \(data.driverSurname)",
+            kCGPDFContextTitle: reportTitle,
             kCGPDFContextAuthor: "Driver Card Reader iOS Pro"
         ]
         let format = UIGraphicsPDFRendererFormat()
@@ -62,18 +74,24 @@ class ReportGenerator {
             
             // --- RESUMEN DE TIEMPOS (TOTAL ARCHIVO) ---
             currentY += 20
-            drawSectionHeader(context, title: "RESUMEN ACUMULADO DEL ARCHIVO", y: currentY, width: pageWidth)
+            let sectionTitle = vehicleFilter != nil ? "RESUMEN DEL VEHÍCULO" : "RESUMEN ACUMULADO DEL ARCHIVO"
+            drawSectionHeader(context, title: sectionTitle, y: currentY, width: pageWidth)
             currentY += 40
             
-            let totalDriving = data.activities.filter { $0.type == .driving }.reduce(0) { $0 + $1.duration }
-            let totalWork = data.activities.filter { $0.type == .work }.reduce(0) { $0 + $1.duration }
-            let totalRest = data.activities.filter { $0.type == .breakOrRest }.reduce(0) { $0 + $1.duration }
+            let totalDriving = filteredActivities.filter { $0.type == .driving }.reduce(0) { $0 + $1.duration }
+            let totalWork = filteredActivities.filter { $0.type == .work }.reduce(0) { $0 + $1.duration }
+            let totalRest = filteredActivities.filter { $0.type == .breakOrRest }.reduce(0) { $0 + $1.duration }
+            let totalAvail = filteredActivities.filter { $0.type == .availability }.reduce(0) { $0 + $1.duration }
             
             drawInfoRow(context, label: "Total Conducción:", value: formatDuration(totalDriving), x: 50, y: currentY)
             currentY += 25
             drawInfoRow(context, label: "Total Trabajo:", value: formatDuration(totalWork), x: 50, y: currentY)
             currentY += 25
             drawInfoRow(context, label: "Total Descanso:", value: formatDuration(totalRest), x: 50, y: currentY)
+            currentY += 25
+            drawInfoRow(context, label: "Total Disponibilidad:", value: formatDuration(totalAvail), x: 50, y: currentY)
+            currentY += 25
+            drawInfoRow(context, label: "Total Actividades:", value: "\(filteredActivities.count)", x: 50, y: currentY)
             currentY += 40
             
             // --- RESUMEN DE JORNADAS ---

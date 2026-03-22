@@ -1270,14 +1270,14 @@ class DDDParser {
         // Find first printable ASCII character (A-Z, a-z, space)
         var startIndex = 0
         for (i, byte) in sub.enumerated() {
-            if (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122) || byte == 32 {
+            if byte >= 32 && byte < 127 {
                 startIndex = i
                 break
             }
         }
         
         // Extract from start index, filtering non-printable chars
-        let filtered = Array(sub[startIndex...]).filter { ($0 >= 32 && $0 < 127) || $0 == 32 }
+        let filtered = Array(sub[startIndex...]).filter { $0 >= 32 && $0 < 127 }
         
         return (String(bytes: filtered, encoding: .isoLatin1) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)

@@ -96,7 +96,7 @@ struct CalendarView: View {
                             }
                             
                             // Estadísticas del vehículo
-                            let vehicleActivities = data.activities.filter { _ in true } // Placeholder
+                            let vehicleActivities = data.activities.filter { $0.vehiclePlate == selectedVehicle }
                             let totalDuration = vehicleActivities.reduce(0) { $0 + $1.duration }
                             let hours = totalDuration / 3600
                             
@@ -129,10 +129,13 @@ struct CalendarView: View {
                         .padding(.horizontal)
                     }
                     
+                    // Actividades filtradas por vehículo
+                    let filteredActivities = selectedVehicle == "Todos" ? data.activities : data.activities.filter { $0.vehiclePlate == selectedVehicle }
+                    
                     if viewMode == 0 {
                         ScrollView {
                             VStack(spacing: 20) {
-                                ForEach(groupedActivities(data.activities), id: \.key) { day, acts in
+                                ForEach(groupedActivities(filteredActivities), id: \.key) { day, acts in
                                     DayActivityRow(date: day, activities: acts)
                                 }
                             }
@@ -140,7 +143,7 @@ struct CalendarView: View {
                         }
                     } else {
                         MonthlyGridView(
-                            activities: data.activities, 
+                            activities: filteredActivities, 
                             infringements: data.infringements,
                             onDayTapped: { date in
                                 selectedDay = date

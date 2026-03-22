@@ -170,8 +170,9 @@ struct DriverInfoHeader: View {
                 
                 VStack(alignment: .trailing, spacing: 10) {
                     Button(action: {
-                        if let pdf = ReportGenerator.generateActivityReport(data: data) {
-                            let url = FileManager.default.temporaryDirectory.appendingPathComponent("Informe_GloboFleet.pdf")
+                        if let pdf = ReportGenerator.generateActivityReport(data: data, vehicleFilter: selectedVehicle) {
+                            let fileName = selectedVehicle != nil ? "Informe_\(selectedVehicle!).pdf" : "Informe_GloboFleet.pdf"
+                            let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
                             try? pdf.write(to: url)
                             let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
                             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

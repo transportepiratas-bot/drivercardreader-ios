@@ -145,6 +145,7 @@ struct RiskLevelHeader: View {
 
 struct InfringementCard: View {
     let infringement: Infringement
+    @State private var showRegulation = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -196,13 +197,17 @@ struct InfringementCard: View {
                     .foregroundColor(.white)
                     .lineLimit(nil)
                 
-                HStack {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(riskColor)
-                    Text("Infracción detectada")
-                        .font(.caption2)
-                        .foregroundColor(riskColor)
+                Button(action: {
+                    showRegulation = true
+                }) {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(riskColor)
+                        Text("Ver normativa")
+                            .font(.caption2)
+                            .foregroundColor(riskColor)
+                    }
                 }
             }
             .padding(12)
@@ -213,6 +218,9 @@ struct InfringementCard: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
+        .sheet(isPresented: $showRegulation) {
+            RegulationDetailView(infringement: infringement)
+        }
     }
     
     private var riskColor: Color {
@@ -236,5 +244,124 @@ struct InfringementCard: View {
         formatter.dateFormat = "dd/MM/yyyy HH:mm"
         formatter.timeZone = TimeZone.current // Explicitly use device's local timezone
         return formatter.string(from: infringement.timestamp)
+    }
+}
+
+struct RegulationDetailView: View {
+    let infringement: Infringement
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(infringement.article)
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.globoAccent)
+                        
+                        Text(infringement.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(12)
+                    
+                    // Descripción de la infracción
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Descripción de la infracción")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.globoAccent)
+                        
+                        Text(infringement.description)
+                            .font(.body)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    
+                    // Normativa aplicable
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Normativa aplicable")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.globoAccent)
+                        
+                        Text(getRegulationText())
+                            .font(.body)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                    
+                    // Consecuencias
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Consecuencias")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.globoAccent)
+                        
+                        Text(getConsequences())
+                            .font(.body)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                }
+                .padding()
+            }
+            .background(Color.globoBlue.edgesIgnoringSafeArea(.all))
+            .navigationTitle("Normativa")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cerrar") {
+                        dismiss()
+                    }
+                    .foregroundColor(.globoAccent)
+                }
+            }
+        }
+    }
+    
+    private func getRegulationText() -> String {
+        // Mapear artículos a textos de normativa
+        switch infringement.article {
+        case "Art. 6 - Tiempo de conducción diario":
+            return "Reglamento (CE) 561/2006, Artículo 6:\n\n• La conducción diaria no puede exceder las 9 horas.\n• Puede ampliarse a 10 horas dos veces por semana.\n• La conducción debe interrumpirse cada 4 horas y media."
+            
+        case "Art. 7 - Tiempo de conducción semanal":
+            return "Reglamento (CE) 561/2006, Artículo 7:\n\n• La conducción semanal no puede exceder las 56 horas.\n• La conducción en dos semanas consecutivas no puede superar las 90 horas."
+            
+        case "Art. 8 - Descanso diario":
+            return "Reglamento (CE) 561/2006, Artículo 8:\n\n• El descanso diario debe ser de al menos 11 horas.\n• Puede reducirse a 9 horas tres veces por semana.\n• El descanso puede fraccionarse en dos períodos."
+            
+        case "Art. 12 - Pausas":
+            return "Reglamento (CE) 561/2006, Artículo 12:\n\n• Después de 4 horas y media de conducción, el conductor debe hacer una pausa de al menos 45 minutos.\n• La pausa puede dividirse en dos períodos de 15 y 30 minutos."
+            
+        default:
+            return "Reglamento (CE) 561/2006 sobre los tiempos de conducción y descanso de los conductores de transporte por carretera.\n\nEsta normativa establece los límites máximos de conducción y los tiempos mínimos de descanso para garantizar la seguridad vial."
+        }
+    }
+    
+    private func getConsequences() -> String {
+        switch infringement.severity {
+        case .minor:
+            return "Infracción LEVE:\n• Sanción económica de 100 a 200 euros.\n• No implica pérdida de puntos."
+            
+        case .serious:
+            return "Infracción GRAVE:\n• Sanción económica de 200 a 500 euros.\n• Pérdida de 2 puntos del permiso de conducción.\n• Posible inmovilización del vehículo."
+            
+        case .verySerious:
+            return "Infracción MUY GRAVE:\n• Sanción económica de 500 a 2.000 euros.\n• Pérdida de 4 puntos del permiso de conducción.\n• Inmovilización del vehículo.\n• Posible suspensión del permiso."
+        }
     }
 }
