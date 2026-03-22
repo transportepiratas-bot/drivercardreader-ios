@@ -186,7 +186,19 @@ struct ReaderView: View {
         let workHours = activities.filter { $0.type == .work }.reduce(0) { $0 + $1.duration } / 3600
         let breakHours = activities.filter { $0.type == .breakOrRest }.reduce(0) { $0 + $1.duration } / 3600
         let effectiveWork = drivingHours + workHours
-        let estimatedKM = drivingHours * 80 // promedio 80 km/h
+        
+        // Calcular kilómetros reales del odómetro
+        var estimatedKM: Double = 0
+        if let data = readerVM.tachoData, !data.countryRecords.isEmpty {
+            let odometerValues = data.countryRecords.map { Double($0.odometer) }
+            if let minOdometer = odometerValues.min(), let maxOdometer = odometerValues.max() {
+                estimatedKM = maxOdometer - minOdometer
+            }
+        }
+        // Fallback si no hay datos de odómetro
+        if estimatedKM <= 0 {
+            estimatedKM = drivingHours * 80
+        }
         
         let calendar = Calendar.current
         let daysSet = Set(activities.map { calendar.startOfDay(for: $0.start) })

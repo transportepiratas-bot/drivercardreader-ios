@@ -1356,11 +1356,20 @@ class ReaderViewModel: ObservableObject {
                     let workSecs    = parsed.activities.filter { $0.type == .work }.reduce(0.0) { $0 + $1.duration }
                     let breakSecs   = parsed.activities.filter { $0.type == .breakOrRest }.reduce(0.0) { $0 + $1.duration }
                     
+                    // Calcular kilómetros reales del odómetro
+                    var realKilometers: Double = 0
+                    if !parsed.countryRecords.isEmpty {
+                        let odometerValues = parsed.countryRecords.map { Double($0.odometer) }
+                        if let minOdometer = odometerValues.min(), let maxOdometer = odometerValues.max() {
+                            realKilometers = maxOdometer - minOdometer
+                        }
+                    }
+                    
                     self.dailyDriving          = drivingSecs / 3600
                     self.dailyWork             = (drivingSecs + workSecs) / 3600
                     self.remainingDrivingTime  = max(0, 9.0 - self.dailyDriving)
                     self.remainingBreakTime    = max(0, 45.0 - breakSecs / 60)
-                    self.totalMileage          = (drivingSecs / 3600) * 80
+                    self.totalMileage          = realKilometers > 0 ? realKilometers : (drivingSecs / 3600) * 80
                     self.speedViolationsCount  = 0  // no speed data in card files
                     
                     if parsed.infringements.isEmpty {

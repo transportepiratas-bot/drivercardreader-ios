@@ -39,7 +39,7 @@ struct SummaryView: View {
                                     .font(.caption)
                                     .bold()
                                     .foregroundColor(.white.opacity(0.5))
-                                let km = drivingHours * 80
+                                let km = calculateRealKilometers()
                                 Text(String(format: "%.0f km", km))
                                     .font(.title2)
                                     .bold()
@@ -137,6 +137,34 @@ struct SummaryView: View {
             }
             return true
         }
+    }
+    
+    private func calculateRealKilometers() -> Double {
+        guard let data = readerVM.tachoData else { return 0 }
+        
+        // Filtrar registros de países por vehículo seleccionado si aplica
+        let records: [CountryRecord]
+        if let vehicle = selectedVehicle {
+            // Los registros de países no tienen vehículo asociado directo,
+            // así que usamos todos los registros
+            records = data.countryRecords
+        } else {
+            records = data.countryRecords
+        }
+        
+        // Calcular kilómetros reales del odómetro
+        if !records.isEmpty {
+            let odometerValues = records.map { Double($0.odometer) }
+            if let minOdometer = odometerValues.min(), let maxOdometer = odometerValues.max() {
+                let km = maxOdometer - minOdometer
+                if km > 0 {
+                    return km
+                }
+            }
+        }
+        
+        // Fallback: usar totalMileage del ViewModel
+        return readerVM.totalMileage
     }
 }
 
