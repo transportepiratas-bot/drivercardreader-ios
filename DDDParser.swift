@@ -1004,52 +1004,66 @@ class DDDParser {
         guard payload.count >= 2 else { return }
         let _ = Int(payload[0]) << 8 | Int(payload[1]) // vehiclePointerNewestRecord
         
-        var offset = 2
         var plates: [String] = []
         
-        while offset + 31 <= payload.count {
-            // Odometer is 3 bytes (offset+0 and offset+3)
-            let initialOdometer = Int(payload[offset]) << 16 | Int(payload[offset + 1]) << 8 | Int(payload[offset + 2])
-            let finalOdometer = Int(payload[offset + 3]) << 16 | Int(payload[offset + 4]) << 8 | Int(payload[offset + 5])
-            
-            // vehicleFirstUse (offset+6, 4 bytes)
-            let firstUseSec = UInt32(payload[offset + 6]) << 24 |
-                              UInt32(payload[offset + 7]) << 16 |
-                              UInt32(payload[offset + 8]) << 8 |
-                              UInt32(payload[offset + 9])
-            
-            // vehicleLastUse (offset+10, 4 bytes)
-            let lastUseSec = UInt32(payload[offset + 10]) << 24 |
-                             UInt32(payload[offset + 11]) << 16 |
-                             UInt32(payload[offset + 12]) << 8 |
-                             UInt32(payload[offset + 13])
-            
-            // vehicleRegistrationNumber (offset+15, 14 bytes)
-            let plateBytes = Array(payload[(offset + 15) ..< (offset + 29)])
-            
-            if let text = String(bytes: plateBytes, encoding: .ascii) {
-                // Limpiamos la matrícula (es posible que esté rellenada con 0x00 o espacios)
-                let cleanPlate = text.components(separatedBy: "\0").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        // Search for plate patterns: 0x0F 0x01 followed by ASCII plate
+        var i = 2
+        while i < payload.count - 20 {
+            // Look for marker 0x0F 0x01
+            if payload[i] == 0x0F && payload[i + 1] == 0x01 {
+                // Extract plate (14 bytes after marker)
+                let plateStart = i + 2
+                let plateEnd = min(plateStart + 14, payload.count)
+                let plateBytes = Array(payload[plateStart ..< plateEnd])
                 
-                if !cleanPlate.isEmpty {
-                    if !plates.contains(cleanPlate) {
-                        plates.append(cleanPlate)
-                    }
+                if let text = String(bytes: plateBytes, encoding: .ascii) {
+                    let cleanPlate = text.components(separatedBy: "\0").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                     
-                    if firstUseSec > 0 {
-                        // Las fechas de los vehículos ya vienen bien en la tarjeta (UTC normal), no necesitan desfase
-                        let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec))
-                        // Si no hay fecha de fin, usar la fecha actual en lugar de un año en el futuro
-                        let endDate = lastUseSec == 0 ? Date() : Date(timeIntervalSince1970: TimeInterval(lastUseSec))
+                    if cleanPlate.count >= 5 && !cleanPlate.isEmpty {
+                        // Valid plate found
+                        if !plates.contains(cleanPlate) {
+                            plates.append(cleanPlate)
+                            print("DDDParser: Found plate: \(cleanPlate) at offset \(i)")
+                        }
                         
-                        result.vehicleUsage.append(VehicleUsageRecord(plate: cleanPlate, start: startDate, end: endDate, initialOdometer: initialOdometer, finalOdometer: finalOdometer))
+                        // Look backwards for odometer and timestamps
+                        // Structure before plate: odometer_initial(3) + odometer_final(3) + firstUse(4) + lastUse(4) + marker(2)
+                        if i >= 16 {
+                            let odomStart = i - 16
+                            let initialOdometer = Int(payload[odomStart]) << 16 | Int(payload[odomStart + 1]) << 8 | Int(payload[odomStart + 2])
+                            let finalOdometer = Int(payload[odomStart + 3]) << 16 | Int(payload[odomStart + 4]) << 8 | Int(payload[odomStart + 5])
+                            
+                            let firstUseSec = UInt32(payload[odomStart + 6]) << 24 |
+                                              UInt32(payload[odomStart + 7]) << 16 |
+                                              UInt32(payload[odomStart + 8]) << 8 |
+                                              UInt32(payload[odomStart + 9])
+                            
+                            let lastUseSec = UInt32(payload[odomStart + 10]) << 24 |
+                                             UInt32(payload[odomStart + 11]) << 16 |
+                                             UInt32(payload[odomStart + 12]) << 8 |
+                                             UInt32(payload[odomStart + 13])
+                            
+                            if firstUseSec > 1451606400 && firstUseSec < 2147483647 {
+                                let startDate = Date(timeIntervalSince1970: TimeInterval(firstUseSec))
+                                let endDate = lastUseSec == 0 ? Date() : Date(timeIntervalSince1970: TimeInterval(lastUseSec))
+                                
+                                let distance = finalOdometer - initialOdometer
+                                if distance > 0 && distance < 10000 { // Reasonable distance
+                                    result.vehicleUsage.append(VehicleUsageRecord(plate: cleanPlate, start: startDate, end: endDate, initialOdometer: initialOdometer, finalOdometer: finalOdometer))
+                                    print("DDDParser: Vehicle \(cleanPlate): \(initialOdometer)-\(finalOdometer)=\(distance)km")
+                                }
+                            }
+                        }
                     }
                 }
+                i += 16 // Skip past this record
+            } else {
+                i += 1
             }
-            offset += 31 // Tamaño del registro CardVehicleRecord
         }
         
         result.vehicles = plates
+        print("DDDParser: Found \(plates.count) vehicles: \(plates.joined(separator: ", "))")
     }
     
     // MARK: - Country Records Parser (0x0506 EF_PLACES)
