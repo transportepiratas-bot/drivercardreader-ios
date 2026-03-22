@@ -633,8 +633,24 @@ struct DayDetailSheet: View {
         let work = dayActivities.filter { $0.type == .work }.reduce(0) { $0 + $1.duration }
         let rest = dayActivities.filter { $0.type == .breakOrRest }.reduce(0) { $0 + $1.duration }
         let avail = dayActivities.filter { $0.type == .availability }.reduce(0) { $0 + $1.duration }
-        let distance = dayActivities.compactMap { $0.distance }.reduce(0, +)
-        return (driving / 3600, work / 3600, rest / 3600, avail / 3600, distance / 1000)
+        
+        // Calcular distancia del día basándose en registros de vehículos
+        var distance: Double = 0
+        if let data = readerVM.tachoData {
+            let calendar = Calendar.current
+            let dayStart = calendar.startOfDay(for: date)
+            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+            
+            // Buscar registros de vehículos que coincidan con este día
+            for record in data.vehicleUsage {
+                if record.start >= dayStart && record.start < dayEnd {
+                    let recordDistance = Double(record.finalOdometer - record.initialOdometer)
+                    distance += recordDistance
+                }
+            }
+        }
+        
+        return (driving / 3600, work / 3600, rest / 3600, avail / 3600, distance)
     }
     
     private var dateFormatter: DateFormatter {
